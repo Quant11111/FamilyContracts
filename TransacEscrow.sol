@@ -11,7 +11,7 @@ contract TransacEscrow {
     address payable public admin ;
     uint public milestonesNumber; //nombre de milestones (taille des array)
     bool[] public inProgress; //état de chaques milestones
-    uint[] weiPrices ; //array des différents prix
+    uint[] public weiPrices ; //array des différents prix
     uint weiPricesSum ;
     uint public transacId;
     uint userTaxes = 3; //pourcentage du paiement versé à l'admin lorsque le buyer unlock (refound = taxes free)
@@ -34,12 +34,13 @@ contract TransacEscrow {
 
     //Statuses {INPROGRESS/true 0, ENDED/false 1}
 
-    constructor(address payable _seller, address payable _admin, uint[] memory _weiPrices , uint _weiPricesSum) payable{
+    constructor(uint _transacId, address payable _seller, address payable _admin, uint[] memory _weiPrices , uint _weiPricesSum) payable{
         require(msg.value >= _weiPricesSum );        
         weiPrices = _weiPrices;
         buyer = payable(msg.sender) ;
         seller = _seller ; 
         admin = _admin ;
+        transacId = _transacId;
         milestonesNumber = _weiPrices.length ;
         weiPricesSum = _weiPricesSum ;
         for (uint256 i = 0; i < _weiPrices.length; ++i) {
@@ -51,7 +52,7 @@ contract TransacEscrow {
     ////////////////////////////////////////////////////User Functions : ////////////////////////////////////////////////////////
 
     //l'acheteur déverrouille le paiement de toutes les milestones restantes
-    function unlockAll() public checkIfBuyer {
+    function unlockAll() external checkIfBuyer {
         for (uint256 i = 0; i < milestonesNumber; ++i){
             if(inProgress[i]==true){
                 unlockMilestone(i);
@@ -60,7 +61,7 @@ contract TransacEscrow {
     } 
 
     //le vendeur rembourse le paiement de toutes les milestones restantes
-    function refoundAll() public checkIfSeller {
+    function refoundAll() external checkIfSeller {
         for (uint256 i = 0; i < milestonesNumber; ++i){
             if(inProgress[i]==true){
                 refoundMilestone(i);
@@ -90,7 +91,7 @@ contract TransacEscrow {
     //////////////////////////////////////////////////////Admin Functions : /////////////////////////////////////////////////////
 
     //l'admin déverrouille le paiement de toutes les milestones restantes
-    function unlockAllAdmin() public checkIfAdmin {
+    function unlockAllAdmin() external checkIfAdmin {
         for (uint256 i = 0; i < milestonesNumber; ++i){
             if(inProgress[i]==true){
                 unlockMilestoneAdmin(i);
@@ -99,7 +100,7 @@ contract TransacEscrow {
     }  
 
     //l'admin rembourse toutes les milestones restantes
-    function refoundAllAdmin() public checkIfAdmin {
+    function refoundAllAdmin() external checkIfAdmin {
         for (uint256 i = 0; i < milestonesNumber; ++i){
             if(inProgress[i]==true){
                 refoundMilestoneAdmin(i);
