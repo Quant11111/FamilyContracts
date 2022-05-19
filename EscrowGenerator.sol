@@ -37,22 +37,42 @@ contract EscrowGenerator is Adminable {
     //////////////////user Functions ://///////////////////////
     function unlockMilestone(uint _transacId, uint _milestoneIndex) public{
         TransacEscrow transac = TransacEscrow(escrows[_transacId]);
-        transac.unlockMilestone(_milestoneIndex);
+        transac.unlockMilestone(_milestoneIndex, msg.sender);
     }
 
     function unlockAll(uint _transacId) public{
         TransacEscrow transac = TransacEscrow(escrows[_transacId]);
-        transac.unlockAll();
+        transac.unlockAll(msg.sender);
     }
+
+    function refoundMilestone(uint _transacId, uint _milestoneIndex) public{
+        TransacEscrow transac = TransacEscrow(escrows[_transacId]);
+        transac.refoundMilestone(_milestoneIndex, msg.sender);
+    }
+
+    function refoundAll(uint _transacId) public{
+        TransacEscrow transac = TransacEscrow(escrows[_transacId]);
+        transac.refoundAll(msg.sender);
+    }
+
+
 
     ////////////////admin Functions : //////////////////////////
     function unlockMilestoneAdmin(uint _transacId, uint _milestoneIndex) public{
         TransacEscrow transac = TransacEscrow(escrows[_transacId]);
-        transac.unlockMilestoneAdmin(_milestoneIndex);
+        transac.unlockMilestoneAdmin(_milestoneIndex, msg.sender);
     }
     function unlockAllAdmin(uint _transacId) public{
         TransacEscrow transac = TransacEscrow(escrows[_transacId]);
-        transac.unlockAllAdmin();
+        transac.unlockAllAdmin(msg.sender);
+    }
+    function refoundMilestoneAdmin(uint _transacId, uint _milestoneIndex) public{
+        TransacEscrow transac = TransacEscrow(escrows[_transacId]);
+        transac.refoundMilestoneAdmin(_milestoneIndex, msg.sender);
+    }
+    function refoundAllAdmin(uint _transacId) public{
+        TransacEscrow transac = TransacEscrow(escrows[_transacId]);
+        transac.refoundAllAdmin(msg.sender);
     }
 
 }

@@ -6,6 +6,7 @@ pragma solidity >=0.7.0 <0.9.0;
 contract TransacEscrow {
 
     //variables :
+    address public factory ;
     address payable public buyer ;
     address payable public seller ; 
     address payable public admin ;
@@ -18,6 +19,8 @@ contract TransacEscrow {
     uint adminTaxes = 20; //pourcentage versé à l'admin lors de l'activation d'une fonction admin (refound/unlock)
 
     //modifiers
+
+    /*
     modifier checkIfBuyer{
         require(msg.sender == buyer, "only callable by buyer");
         _;
@@ -30,7 +33,12 @@ contract TransacEscrow {
         require(msg.sender == admin, "only callable by admin");
         _;
     }
+    */
 
+    modifier checkIfFactory{
+        require(msg.sender == factory);
+        _;
+    }
 
     //Statuses {INPROGRESS/true 0, ENDED/false 1}
 
@@ -52,79 +60,90 @@ contract TransacEscrow {
     ////////////////////////////////////////////////////User Functions : ////////////////////////////////////////////////////////
 
     //l'acheteur déverrouille le paiement de toutes les milestones restantes
-    function unlockAll() external checkIfBuyer {
+    function unlockAll(address _msgSender) external checkIfFactory {
+        require(_msgSender == buyer);
         for (uint256 i = 0; i < milestonesNumber; ++i){
             if(inProgress[i]==true){
-                unlockMilestone(i);
+                unlockMilestoneInternal(i, userTaxes);
             }
         }
     } 
 
     //le vendeur rembourse le paiement de toutes les milestones restantes
-    function refoundAll() external checkIfSeller {
+    function refoundAll(address _msgSender) external checkIfFactory {
+        require(_msgSender == seller);
         for (uint256 i = 0; i < milestonesNumber; ++i){
             if(inProgress[i]==true){
-                refoundMilestone(i);
+                refoundMilestoneInternal(i, userTaxes);
             }
         }
     } 
 
     //l'acheteur déverrouille la milestone numéro "_index"  !! 1rst index = 0
-    function unlockMilestone(uint _index) public checkIfBuyer{
-        require(inProgress[_index] == true);
-        uint _taxes = weiPrices[_index]*userTaxes/100;
-        uint _amount = weiPrices[_index]-_taxes;
-        seller.transfer(_amount);
-        admin.transfer(_taxes);
-        inProgress[_index]=false;
+    function unlockMilestone(uint _index, address _msgSender) public checkIfFactory{
+        require(_msgSender == buyer);
+        unlockMilestoneInternal(_index, userTaxes);
     }
 
     //le vendeur rembourse la milestone numéro "_index"  !! 1rst index = 0
-    function refoundMilestone(uint _index) public checkIfSeller{
-        require(inProgress[_index]== true);
-        uint _amount = weiPrices[_index];
-        buyer.transfer(_amount);
-        inProgress[_index]=false;
+    function refoundMilestone(uint _index, address _msgSender) public checkIfFactory{
+        require(_msgSender == seller);
+        refoundMilestoneInternal(_index, userTaxes);
     }
 
 
     //////////////////////////////////////////////////////Admin Functions : /////////////////////////////////////////////////////
 
     //l'admin déverrouille le paiement de toutes les milestones restantes
-    function unlockAllAdmin() external checkIfAdmin {
+    function unlockAllAdmin(address _msgSender) external checkIfFactory {
+        require(_msgSender == admin);
         for (uint256 i = 0; i < milestonesNumber; ++i){
             if(inProgress[i]==true){
-                unlockMilestoneAdmin(i);
+                unlockMilestoneInternal(i, adminTaxes);
             }
         }
     }  
 
     //l'admin rembourse toutes les milestones restantes
-    function refoundAllAdmin() external checkIfAdmin {
+    function refoundAllAdmin(address _msgSender) external checkIfFactory {
+        require(_msgSender == admin);
         for (uint256 i = 0; i < milestonesNumber; ++i){
             if(inProgress[i]==true){
-                refoundMilestoneAdmin(i);
+                refoundMilestoneInternal(i, adminTaxes);
             }
+            //idée : sortir les transfers de la boucle pour réduir les gaz fees
         }
     }   
 
     //l'admin déverrouille la milestone numéro "_index"  !! 1rst index = 0
-    function unlockMilestoneAdmin(uint _index) public checkIfAdmin {
-        require(inProgress[_index] == true);
-        uint _taxes = weiPrices[_index]*adminTaxes/100;
-        uint _amount = weiPrices[_index]-_taxes;
-        seller.transfer(_amount);
-        admin.transfer(_taxes);
-        inProgress[_index]=false;
+    function unlockMilestoneAdmin(uint _index , address _msgSender) external checkIfFactory {
+        require(_msgSender == admin);
+        unlockMilestoneInternal(_index, adminTaxes);
     }
 
     //l'admin rembourse la milestone numéro "_index"  !! 1rst index = 0
-    function refoundMilestoneAdmin(uint _index) public checkIfAdmin {
+    function refoundMilestoneAdmin(uint _index, address _msgSender) external checkIfFactory {
+        require(_msgSender == admin);
+        refoundMilestoneInternal(_index, adminTaxes);
+    }
+
+    //////////////////////////internal Functions:///////////////////////////
+
+    function refoundMilestoneInternal(uint _index, uint _taxes) private{
         require(inProgress[_index] == true);
-        uint _taxes = weiPrices[_index]*adminTaxes/100;
-        uint _amount = weiPrices[_index]-_taxes;
-        buyer.transfer(_amount);
-        admin.transfer(_taxes);
+        uint taxes = weiPrices[_index]*_taxes/100;
+        uint amount = weiPrices[_index]-taxes;
+        buyer.transfer(amount);
+        admin.transfer(taxes);
+        inProgress[_index]=false;
+    }
+
+    function unlockMilestoneInternal(uint _index, uint _taxes) private{
+        require(inProgress[_index] == true);
+        uint taxes = weiPrices[_index]*_taxes/100;
+        uint amount = weiPrices[_index]-taxes;
+        seller.transfer(amount);
+        admin.transfer(taxes);
         inProgress[_index]=false;
     }
 
