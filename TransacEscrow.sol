@@ -45,7 +45,7 @@ contract TransacEscrow {
     constructor(uint _transacId, address payable _seller, address payable _admin, uint[] memory _weiPrices , uint _weiPricesSum) payable{
         require(msg.value >= _weiPricesSum );        
         weiPrices = _weiPrices;
-        buyer = payable(msg.sender) ;
+        buyer = payable(msg.sender) ; //ATENTION !! msg.senger = factory donc a changer 
         seller = _seller ; 
         admin = _admin ;
         transacId = _transacId;
