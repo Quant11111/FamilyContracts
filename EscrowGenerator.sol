@@ -22,7 +22,7 @@ contract EscrowGenerator is Adminable {
         for (uint256 i = 0; i < _weiPrices.length; ++i) {
             _weiPricesSum = ++_weiPrices[i];
         }
-        TransacEscrow transac = new TransacEscrow{value: msg.value}(_transacId, _seller, admin, _weiPrices, _weiPricesSum);
+        TransacEscrow transac = new TransacEscrow{value: msg.value}(_transacId, payable(msg.sender), _seller, admin, _weiPrices, _weiPricesSum);
         escrows[_transacId]= address(transac);     
     }
 
@@ -58,21 +58,21 @@ contract EscrowGenerator is Adminable {
 
 
     ////////////////admin Functions : //////////////////////////
-    function unlockMilestoneAdmin(uint _transacId, uint _milestoneIndex) public{
+    function unlockMilestoneAdmin(uint _transacId, uint _milestoneIndex) public checkIfAdmin {
         TransacEscrow transac = TransacEscrow(escrows[_transacId]);
-        transac.unlockMilestoneAdmin(_milestoneIndex, msg.sender);
+        transac.unlockMilestoneAdmin(_milestoneIndex);
     }
-    function unlockAllAdmin(uint _transacId) public{
+    function unlockAllAdmin(uint _transacId) public checkIfAdmin {
         TransacEscrow transac = TransacEscrow(escrows[_transacId]);
-        transac.unlockAllAdmin(msg.sender);
+        transac.unlockAllAdmin();
     }
-    function refoundMilestoneAdmin(uint _transacId, uint _milestoneIndex) public{
+    function refoundMilestoneAdmin(uint _transacId, uint _milestoneIndex) public checkIfAdmin{
         TransacEscrow transac = TransacEscrow(escrows[_transacId]);
-        transac.refoundMilestoneAdmin(_milestoneIndex, msg.sender);
+        transac.refoundMilestoneAdmin(_milestoneIndex);
     }
-    function refoundAllAdmin(uint _transacId) public{
+    function refoundAllAdmin(uint _transacId) public checkIfAdmin{
         TransacEscrow transac = TransacEscrow(escrows[_transacId]);
-        transac.refoundAllAdmin(msg.sender);
+        transac.refoundAllAdmin();
     }
 
 }

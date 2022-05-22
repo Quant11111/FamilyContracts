@@ -10,104 +10,84 @@ contract TransacEscrow {
     address payable public buyer ;
     address payable public seller ; 
     address payable public admin ;
-    uint public milestonesNumber; //nombre de milestones (taille des array)
-    bool[] public inProgress; //état de chaques milestones
-    uint[] public weiPrices ; //array des différents prix
+    bool[] public inProgress; //state of each milestones (inProgress = true / ended = false)
+    uint[] public weiPrices ; //prices array (one price per milestone)
     uint weiPricesSum ;
     uint public transacId;
-    uint userTaxes = 3; //pourcentage du paiement versé à l'admin lorsque le buyer unlock (refound = taxes free)
-    uint adminTaxes = 20; //pourcentage versé à l'admin lors de l'activation d'une fonction admin (refound/unlock)
+    uint userTaxes = 3; //fees in % if function called by user
+    uint adminTaxes = 20; //fees in % if function called by admin
 
     //modifiers
 
-    /*
-    modifier checkIfBuyer{
-        require(msg.sender == buyer, "only callable by buyer");
-        _;
-    }
-    modifier checkIfSeller{
-        require(msg.sender == seller, "only callable by seller");
-        _;
-    }
-    modifier checkIfAdmin{
-        require(msg.sender == admin, "only callable by admin");
-        _;
-    }
-    */
-
     modifier checkIfFactory{
-        require(msg.sender == factory);
+        require(msg.sender == factory);  //ensure that _msgSender isn't faked being feeled manualy while the function is called outside of the factory
         _;
     }
 
-    //Statuses {INPROGRESS/true 0, ENDED/false 1}
-
-    constructor(uint _transacId, address payable _seller, address payable _admin, uint[] memory _weiPrices , uint _weiPricesSum) payable{
-        require(msg.value >= _weiPricesSum );        
+    constructor(uint _transacId, address payable _buyer, address payable _seller, address payable _admin, uint[] memory _weiPrices , uint _weiPricesSum) payable{
+        require(msg.value >= _weiPricesSum );
+        factory = msg.sender;        
         weiPrices = _weiPrices;
-        buyer = payable(msg.sender) ; //ATENTION !! msg.senger = factory donc a changer 
+        buyer = _buyer ; 
         seller = _seller ; 
         admin = _admin ;
         transacId = _transacId;
-        milestonesNumber = _weiPrices.length ;
-        weiPricesSum = _weiPricesSum ;
+        weiPricesSum = _weiPricesSum ; 
         for (uint256 i = 0; i < _weiPrices.length; ++i) {
-            inProgress[i] = true;
+            inProgress[i] = true; //init of the milestonesStateArray
         }
     }
 
 
     ////////////////////////////////////////////////////User Functions : ////////////////////////////////////////////////////////
 
-    //l'acheteur déverrouille le paiement de toutes les milestones restantes
+    //the buyer unlock all remaining milestones
     function unlockAll(address _msgSender) external checkIfFactory {
         require(_msgSender == buyer);
-        for (uint256 i = 0; i < milestonesNumber; ++i){
+        for (uint256 i = 0; i < weiPrices.length; ++i){
             if(inProgress[i]==true){
                 unlockMilestoneInternal(i, userTaxes);
             }
         }
     } 
 
-    //le vendeur rembourse le paiement de toutes les milestones restantes
+    //the seller refound all remaining milestones
     function refoundAll(address _msgSender) external checkIfFactory {
         require(_msgSender == seller);
-        for (uint256 i = 0; i < milestonesNumber; ++i){
+        for (uint256 i = 0; i < weiPrices.length; ++i){
             if(inProgress[i]==true){
                 refoundMilestoneInternal(i, userTaxes);
             }
         }
     } 
 
-    //l'acheteur déverrouille la milestone numéro "_index"  !! 1rst index = 0
+    //the buyer unlock the payment number "_index"  !! 1rst milestone index = 0
     function unlockMilestone(uint _index, address _msgSender) public checkIfFactory{
         require(_msgSender == buyer);
         unlockMilestoneInternal(_index, userTaxes);
     }
 
-    //le vendeur rembourse la milestone numéro "_index"  !! 1rst index = 0
+    //the seller refound the payment number "_index"  !! 1rst milestone index = 0
     function refoundMilestone(uint _index, address _msgSender) public checkIfFactory{
         require(_msgSender == seller);
         refoundMilestoneInternal(_index, userTaxes);
     }
 
 
-    //////////////////////////////////////////////////////Admin Functions : /////////////////////////////////////////////////////
+    ///////////////////////////Admin Functions : //////////////////////////////////
 
-    //l'admin déverrouille le paiement de toutes les milestones restantes
-    function unlockAllAdmin(address _msgSender) external checkIfFactory {
-        require(_msgSender == admin);
-        for (uint256 i = 0; i < milestonesNumber; ++i){
+    //the admin unlock all remaining milestones
+    function unlockAllAdmin() external checkIfFactory {
+        for (uint256 i = 0; i < weiPrices.length; ++i){
             if(inProgress[i]==true){
-                unlockMilestoneInternal(i, adminTaxes);
-            }
+                unlockMilestoneInternal(i, adminTaxes); // Question Is the if loop necessary if the function has a require on the same argument
+            }                                           // (require inProgress[_index] == true) cf. line 111
         }
     }  
 
-    //l'admin rembourse toutes les milestones restantes
-    function refoundAllAdmin(address _msgSender) external checkIfFactory {
-        require(_msgSender == admin);
-        for (uint256 i = 0; i < milestonesNumber; ++i){
+    //the admin refound all remaining milestones
+    function refoundAllAdmin() external checkIfFactory {
+        for (uint256 i = 0; i < weiPrices.length; ++i){
             if(inProgress[i]==true){
                 refoundMilestoneInternal(i, adminTaxes);
             }
@@ -116,18 +96,16 @@ contract TransacEscrow {
     }   
 
     //l'admin déverrouille la milestone numéro "_index"  !! 1rst index = 0
-    function unlockMilestoneAdmin(uint _index , address _msgSender) external checkIfFactory {
-        require(_msgSender == admin);
+    function unlockMilestoneAdmin(uint _index ) external checkIfFactory {
         unlockMilestoneInternal(_index, adminTaxes);
     }
 
     //l'admin rembourse la milestone numéro "_index"  !! 1rst index = 0
-    function refoundMilestoneAdmin(uint _index, address _msgSender) external checkIfFactory {
-        require(_msgSender == admin);
+    function refoundMilestoneAdmin(uint _index) external checkIfFactory {
         refoundMilestoneInternal(_index, adminTaxes);
     }
 
-    //////////////////////////internal Functions:///////////////////////////
+    //////////////////////////Privates Functions:///////////////////////////
 
     function refoundMilestoneInternal(uint _index, uint _taxes) private{
         require(inProgress[_index] == true);
@@ -145,8 +123,5 @@ contract TransacEscrow {
         seller.transfer(amount);
         admin.transfer(taxes);
         inProgress[_index]=false;
-    }
-
-
-
+    } 
 }

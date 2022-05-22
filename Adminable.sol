@@ -10,7 +10,7 @@ contract Adminable {
         admin = payable(msg.sender);
     }
 
-    modifier checkAdmin {
+    modifier checkIfAdmin {
         require(msg.sender == admin);
         _;
     }
