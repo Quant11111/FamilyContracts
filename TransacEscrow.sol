@@ -51,12 +51,12 @@ contract TransacEscrow {
         }
     } 
 
-    //the seller refound all remaining milestones
-    function refoundAll(address _msgSender) external checkIfFactory {
+    //the seller refund all remaining milestones
+    function refundAll(address _msgSender) external checkIfFactory {
         require(_msgSender == seller);
         for (uint256 i = 0; i < weiPrices.length; ++i){
             if(inProgress[i]==true){
-                refoundMilestoneInternal(i, userTaxes);
+                refundMilestoneInternal(i, userTaxes);
             }
         }
     } 
@@ -67,10 +67,10 @@ contract TransacEscrow {
         unlockMilestoneInternal(_index, userTaxes);
     }
 
-    //the seller refound the payment number "_index"  !! 1rst milestone index = 0
-    function refoundMilestone(uint _index, address _msgSender) public checkIfFactory{
+    //the seller refund the payment number "_index"  !! 1rst milestone index = 0
+    function refundMilestone(uint _index, address _msgSender) public checkIfFactory{
         require(_msgSender == seller);
-        refoundMilestoneInternal(_index, userTaxes);
+        refundMilestoneInternal(_index, userTaxes);
     }
 
 
@@ -85,11 +85,11 @@ contract TransacEscrow {
         }
     }  
 
-    //the admin refound all remaining milestones
-    function refoundAllAdmin() external checkIfFactory {
+    //the admin refund all remaining milestones
+    function refundAllAdmin() external checkIfFactory {
         for (uint256 i = 0; i < weiPrices.length; ++i){
             if(inProgress[i]==true){
-                refoundMilestoneInternal(i, adminTaxes);
+                refundMilestoneInternal(i, adminTaxes);
             }
             //idée : sortir les transfers de la boucle pour réduir les gaz fees
         }
@@ -101,13 +101,13 @@ contract TransacEscrow {
     }
 
     //l'admin rembourse la milestone numéro "_index"  !! 1rst index = 0
-    function refoundMilestoneAdmin(uint _index) external checkIfFactory {
-        refoundMilestoneInternal(_index, adminTaxes);
+    function refundMilestoneAdmin(uint _index) external checkIfFactory {
+        refundMilestoneInternal(_index, adminTaxes);
     }
 
     //////////////////////////Privates Functions:///////////////////////////
 
-    function refoundMilestoneInternal(uint _index, uint _taxes) private{
+    function refundMilestoneInternal(uint _index, uint _taxes) private{
         require(inProgress[_index] == true);
         uint taxes = weiPrices[_index]*_taxes/100;
         uint amount = weiPrices[_index]-taxes;

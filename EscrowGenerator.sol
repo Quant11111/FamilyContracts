@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity >=0.7.0 <0.9.0;
 
-import './Adminable.sol';
+import './TrialList.sol';
 import './TransacEscrow.sol';
 
 //////////questions importantes: /////////////////////
@@ -11,7 +11,7 @@ dans ce cas les require du contract transacEscrow sont inutiles et doivent etre 
  */
 
 
-contract EscrowGenerator is Adminable {
+contract EscrowGenerator is TrialList {
 
     mapping(uint=>address) public escrows;
 
@@ -45,14 +45,14 @@ contract EscrowGenerator is Adminable {
         transac.unlockAll(msg.sender);
     }
 
-    function refoundMilestone(uint _transacId, uint _milestoneIndex) public{
+    function refundMilestone(uint _transacId, uint _milestoneIndex) public{
         TransacEscrow transac = TransacEscrow(escrows[_transacId]);
-        transac.refoundMilestone(_milestoneIndex, msg.sender);
+        transac.refundMilestone(_milestoneIndex, msg.sender);
     }
 
-    function refoundAll(uint _transacId) public{
+    function refundAll(uint _transacId) public{
         TransacEscrow transac = TransacEscrow(escrows[_transacId]);
-        transac.refoundAll(msg.sender);
+        transac.refundAll(msg.sender);
     }
 
 
@@ -66,13 +66,13 @@ contract EscrowGenerator is Adminable {
         TransacEscrow transac = TransacEscrow(escrows[_transacId]);
         transac.unlockAllAdmin();
     }
-    function refoundMilestoneAdmin(uint _transacId, uint _milestoneIndex) public checkIfAdmin{
+    function refundMilestoneAdmin(uint _transacId, uint _milestoneIndex) public checkIfAdmin{
         TransacEscrow transac = TransacEscrow(escrows[_transacId]);
-        transac.refoundMilestoneAdmin(_milestoneIndex);
+        transac.refundMilestoneAdmin(_milestoneIndex);
     }
-    function refoundAllAdmin(uint _transacId) public checkIfAdmin{
+    function refundAllAdmin(uint _transacId) public checkIfAdmin{
         TransacEscrow transac = TransacEscrow(escrows[_transacId]);
-        transac.refoundAllAdmin();
+        transac.refundAllAdmin();
     }
 
 }
