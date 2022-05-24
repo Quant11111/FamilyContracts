@@ -58,21 +58,13 @@ contract EscrowGenerator is TrialList {
 
 
     ////////////////admin Functions : //////////////////////////
-    function unlockMilestoneAdmin(uint _transacId, uint _milestoneIndex) public checkIfAdmin {
+    function transferMilestoneAdmin(uint _transacId, uint _milestoneIndex, uint _buyerPercent, uint _sellerPercent) public checkIfAdmin {
         TransacEscrow transac = TransacEscrow(escrows[_transacId]);
-        transac.unlockMilestoneAdmin(_milestoneIndex);
+        transac.transferMilestoneAdmin(_milestoneIndex, msg.sender, _buyerPercent, _sellerPercent);
     }
-    function unlockAllAdmin(uint _transacId) public checkIfAdmin {
+    function transferAllAdmin(uint _transacId, uint _buyerPercent, uint _sellerPercent) public checkIfAdmin {
         TransacEscrow transac = TransacEscrow(escrows[_transacId]);
-        transac.unlockAllAdmin();
-    }
-    function refundMilestoneAdmin(uint _transacId, uint _milestoneIndex) public checkIfAdmin{
-        TransacEscrow transac = TransacEscrow(escrows[_transacId]);
-        transac.refundMilestoneAdmin(_milestoneIndex);
-    }
-    function refundAllAdmin(uint _transacId) public checkIfAdmin{
-        TransacEscrow transac = TransacEscrow(escrows[_transacId]);
-        transac.refundAllAdmin();
+        transac.transferAllAdmin(msg.sender, _buyerPercent, _sellerPercent);
     }
 
 }
