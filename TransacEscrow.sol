@@ -4,9 +4,16 @@ pragma solidity >=0.7.0 <0.9.0;
 
 
 contract TransacEscrow {
+    //tracking of people who votes to prevent people to vote several times for the same transactions 
+    mapping(address=>bool) public voted; //bool are by default false in solidity
+    //tracking of the votes 
+    uint count1; 
+    uint count2;
+    uint count3;
+    uint count4;
+    uint count5;
 
     //transaction state
-
     enum TransactionState{ UNCONFIRMED, CONFIRMED, COMPLETED, TRIAL }
     TransactionState thisState = TransactionState.UNCONFIRMED;
 
@@ -21,7 +28,7 @@ contract TransacEscrow {
     uint public transacId;
     uint userTaxes = 3; //fees in % if function called by user
     uint adminTaxes = 20; //fees in % if function called by admin
-    uint deploymentTime ;
+    uint TimeStamp ;
 
     //modifiers
 
@@ -56,7 +63,7 @@ contract TransacEscrow {
         admin = _admin ;
         transacId = _transacId;
         weiPricesSum = _weiPricesSum ; 
-        deploymentTime = block.timestamp;
+        TimeStamp = block.timestamp;
         for (uint256 i = 0; i < _weiPrices.length; ++i) {
             inProgress[i] = true; //init of the milestonesStateArray
         }
@@ -67,8 +74,7 @@ contract TransacEscrow {
     //buyer///////////
     //can autoRefund if no confirmation for 3 days
     function autoRefund(address _msgSender) external checkIfFactory unconfirmed {
-        require(block.timestamp >= deploymentTime + 259200); //3days = 259200sec
-        require(_msgSender == buyer);
+        require(block.timestamp >= TimeStamp + 259200 && _msgSender == buyer); //3days = 259200sec
         for (uint256 i = 0; i < weiPrices.length; ++i){
             if(inProgress[i]==true){
                 refundMilestonePrivate(i, 0);
@@ -130,6 +136,13 @@ contract TransacEscrow {
         refundMilestonePrivate(_index, userTaxes);
     }
 
+    //buyer or seller///////////////////
+    function callTrial(address _msgSender) external checkIfFactory confirmed{
+        require(_msgSender == buyer || _msgSender == seller);
+        thisState = TransactionState.TRIAL;
+        
+    }
+
 
     //Admin////////////////
     //transfer une ou plusieurs milestones(ex 20%refund and 80%unlocked)
@@ -139,12 +152,39 @@ contract TransacEscrow {
 
     }
     function transferAllAdmin(address _msgSender, uint _buyerPercent, uint _sellerPercent) external checkIfFactory{
-        require(_msgSender == admin);
-        require(_buyerPercent + _sellerPercent == 100);
+        require(_msgSender == admin && _buyerPercent + _sellerPercent == 100);
         for (uint256 i = 0; i < weiPrices.length; ++i){
             if(inProgress[i]==true){
-                transferMilestone(i, _buyerPercent, _sellerPercent);            }
+                transferMilestone(i, _buyerPercent, _sellerPercent);
+            }
         }
+    }
+
+    //////////////////////////(thisState == TRIAL)//////////////////////////
+    function vote1(address _msgSender) external checkIfFactory{
+        require(voted[_msgSender]==false);
+        count1 = ++1;
+        voted[_msgSender]==true;
+    }
+    function vote2(address _msgSender) external checkIfFactory{
+        require(voted[_msgSender]==false);
+        count2 = ++1;
+        voted[_msgSender]==true;
+    }
+    function vote3(address _msgSender) external checkIfFactory{
+        require(voted[_msgSender]==false);
+        count3 = ++1;
+        voted[_msgSender]==true;
+    }
+    function vote4(address _msgSender) external checkIfFactory{
+        require(voted[_msgSender]==false);
+        count4 = ++1;
+        voted[_msgSender]==true;
+    }
+    function vote5(address _msgSender) external checkIfFactory{
+        require(voted[_msgSender]==false);
+        count5 = ++1;
+        voted[_msgSender]==true;
     }
 
 
@@ -170,8 +210,7 @@ contract TransacEscrow {
 
     //only used in admin function 
     function transferMilestone(uint _index, uint _buyerPercent, uint _sellerPercent) private{
-        require( _buyerPercent + _sellerPercent == 100);
-        require(inProgress[_index] == true);
+        require( _buyerPercent + _sellerPercent == 100 && inProgress[_index] == true);
         uint taxes = weiPrices[_index]*adminTaxes/100;
         uint amount = weiPrices[_index]-taxes;
         uint refundAmount = amount*_buyerPercent/100;
